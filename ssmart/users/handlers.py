@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery
 import ssmart.users.keyboards as kb
 import ssmart.database.requests as rq
 from ssmart import config
+from aiogram.types import InputMediaPhoto
 
 router = Router()
 
@@ -106,21 +107,61 @@ async def show_items(callback: CallbackQuery):
     lang_choice = await rq.get_user(callback.from_user.id)
     if not items:
         text = "Товары не найдены." if lang_choice == 'ru' else "Maxsulotlar topilmadi."
-
         await callback.message.answer(text)
         return
-    price = "Цена:" if lang_choice == 'ru' else "Narxi:"
+
+    price_text = "Цена:" if lang_choice == 'ru' else "Narxi:"
+    course = await rq.get_course()
+
     for item in items:
         keyboard = await kb.item_keyboard(item.id, callback.from_user.id)
         item_name = item.name_ru if lang_choice == 'ru' else item.name_uz
         item_description = item.description_ru if lang_choice == 'ru' else item.description_uz
-        course = await rq.get_course()
-        await callback.message.answer_photo(
-            photo=item.photo,
-            caption=f"{item_name}\n{item_description}\n{price} "
-                    f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
-            reply_markup=keyboard, parse_mode='html'
-        )
+
+        # Если фото хранится в виде списка
+        if isinstance(item.photo, list):
+            if len(item.photo) > 1:
+                # Если несколько фотографий – формируем media group
+                media = []
+                for index, photo_url in enumerate(item.photo):
+                    if index == 0:
+                        media.append(
+                            InputMediaPhoto(
+                                media=photo_url,
+                                caption=f"{item_name}\n{item_description}\n{price_text} "
+                                        f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " ")
+                            )
+                        )
+                    else:
+                        media.append(InputMediaPhoto(media=photo_url))
+                await callback.message.answer_media_group(media=media)
+            elif len(item.photo) == 1:
+                # Если одна фотография – отправляем как обычное фото
+                photo_url = item.photo[0]
+                await callback.message.answer_photo(
+                    photo=photo_url,
+                    caption=f"{item_name}\n{item_description}\n{price_text} "
+                            f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
+                    reply_markup=keyboard,
+                    parse_mode='html'
+                )
+            else:
+                # Если список пустой, можно обработать этот случай (например, отправить сообщение без фото)
+                await callback.message.answer(
+                    text=f"{item_name}\n{item_description}\n{price_text} "
+                         f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
+                    reply_markup=keyboard,
+                    parse_mode='html'
+                )
+        else:
+            # Если по каким-то причинам photo не является списком
+            await callback.message.answer_photo(
+                photo=item.photo,
+                caption=f"{item_name}\n{item_description}\n{price_text} "
+                        f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
+                reply_markup=keyboard,
+                parse_mode='html'
+            )
 
     await callback.answer()
 
@@ -146,17 +187,3 @@ async def show_installment(callback: CallbackQuery):
 
     await callback.answer()
 
-
-@router.callback_query(F.data.startswith('more_images_'))
-async def show_more_images(callback: CallbackQuery):
-    item_id = int(callback.data.split('_')[-1])
-    images = await rq.get_item_images(item_id)
-
-    if not images:
-        await callback.answer("Дополнительных изображений нет.")
-        return
-
-    for image in images:
-        await callback.message.answer_photo(photo=image)
-
-    await callback.answer()

@@ -110,12 +110,9 @@ async def item_keyboard(item_id, user_id):
     lang_choice = await rq.get_user(user_id)
     text_1 = "💳 Оплата картой" if lang_choice == 'ru' else "💳 Karta bilan to'lash"
     text_2 = "📆 Оформить в рассрочку" if lang_choice == 'ru' else "📆 Bo'lib to'lash"
-    text_3 = "🖼️ Еще картинки" if lang_choice == 'ru' else "🖼️ Boshqa rasmlar"
-
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=text_1, callback_data=f'pay_card_{item_id}')],
-        [InlineKeyboardButton(text=text_2, callback_data=f'installment_{item_id}')],
-        [InlineKeyboardButton(text=text_3, callback_data=f'more_images_{item_id}')]
+        [InlineKeyboardButton(text=text_2, callback_data=f'installment_{item_id}')]
     ])
 
 

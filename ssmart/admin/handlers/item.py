@@ -93,14 +93,14 @@ async def process_item_name_uz(message: Message, state: FSMContext):
 
 
 @item_router.message(AddItem.description_ru)
-async def process_item_description(message: Message, state: FSMContext):
+async def process_item_description_ru(message: Message, state: FSMContext):
     await state.update_data(description_ru=message.text)
     await state.set_state(AddItem.description_uz)
     await message.answer("Введите описание товара (на узбекском):")
 
 
 @item_router.message(AddItem.description_uz)
-async def process_item_description(message: Message, state: FSMContext):
+async def process_item_description_uz(message: Message, state: FSMContext):
     await state.update_data(description_uz=message.text)
     await state.set_state(AddItem.price)
     await message.answer("Введите цену товара (только число):")
@@ -114,15 +114,36 @@ async def process_item_price(message: Message, state: FSMContext):
 
     await state.update_data(price=int(message.text))
     await state.set_state(AddItem.photo)
-    await message.answer("Отправьте фото товара:")
+    await message.answer("Отправьте до 3 фотографий товара. После отправки всех фотографий нажмите /done.")
 
 
 @item_router.message(AddItem.photo, F.photo)
 async def process_item_photo(message: Message, state: FSMContext):
-    photo_id = message.photo[-1].file_id
-    await state.update_data(photo=photo_id)
-
     data = await state.get_data()
+    photo = data.get('photo', [])  # Получаем текущий список фотографий
+
+    if len(photo) >= 3:
+        await message.answer("❌ Вы уже отправили максимальное количество фотографий (3).")
+        return
+
+    photo_id = message.photo[-1].file_id
+    photo.append(photo_id)  # Добавляем новую фотографию в список
+    await state.update_data(photo=photo)
+
+    if len(photo) < 3:
+        await message.answer(f"Фотография добавлена. Отправьте еще {3 - len(photo)} фотографий или нажмите /done.")
+    else:
+        await message.answer("Вы отправили максимальное количество фотографий. Нажмите /done для завершения.")
+
+
+@item_router.message(AddItem.photo, F.text == '/done')
+async def process_item_photo_done(message: Message, state: FSMContext):
+    data = await state.get_data()
+    photo = data.get('photo', [])
+
+    if not photo:
+        await message.answer("❌ Вы не отправили ни одной фотографии.")
+        return
 
     logging.info(f"Добавляем товар: {data}")
 
@@ -132,7 +153,7 @@ async def process_item_photo(message: Message, state: FSMContext):
         description_ru=data['description_ru'],
         description_uz=data['description_uz'],
         price=data['price'],
-        photo=data['photo'],
+        photo=photo,
         category=data['category'],
         brand=data['brand'],
         subcategory=data['subcategory']
@@ -141,8 +162,3 @@ async def process_item_photo(message: Message, state: FSMContext):
     main_menu = await admin_kb.admin_keyboard(message.from_user.id)
     await state.clear()
     await message.answer("✅ Товар успешно добавлен!", reply_markup=main_menu)
-
-
-async def check_item_exists(name_ru: str, category_id: int) -> bool:
-    item = await rq.get_item_by_name(name_ru, category_id)
-    return item is not None

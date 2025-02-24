@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_
 from dotenv import load_dotenv
 import os
 from sqlalchemy import Text
+from sqlalchemy import JSON
 
 
 load_dotenv()
@@ -61,18 +62,10 @@ class Item(Base):
     description_uz: Mapped[str] = mapped_column(Text)
     description_ru: Mapped[str] = mapped_column(Text)
     price: Mapped[int] = mapped_column()
-    photo: Mapped[str] = mapped_column(String(255))
+    photo: Mapped[list] = mapped_column(JSON)
     category: Mapped[int] = mapped_column(ForeignKey("categories.id"))
     brand: Mapped[int] = mapped_column(ForeignKey("brands.id"))
     subcategory: Mapped[int] = mapped_column(ForeignKey("subcategories.id"))
-
-
-class ItemImages(Base):
-    __tablename__ = 'item_images'
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"))
-    image_url: Mapped[str] = mapped_column(String(255))
 
 
 class DollarExchangeRate(Base):

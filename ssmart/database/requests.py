@@ -1,5 +1,5 @@
 from ssmart.database.models import async_session
-from ssmart.database.models import User, Category, Item, Brand, Subcategory, DollarExchangeRate, ItemImages
+from ssmart.database.models import User, Category, Item, Brand, Subcategory, DollarExchangeRate
 from sqlalchemy import select, update
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,12 +44,6 @@ async def get_items(category_id, brand_id, subcategory_id):
             Item.category == category_id, Item.brand == brand_id, Item.subcategory == subcategory_id)
 
         return await session.scalars(query)
-
-
-async def get_item_images(item_id: int):
-    async with async_session() as session:
-        result = await session.execute(select(ItemImages.image_url).where(ItemImages.item_id == item_id))
-        return result.scalars().all()
 
 
 async def add_user(user_id: int, user_name: str, language: str, session: AsyncSession):
@@ -107,7 +101,7 @@ async def add_item(
         description_uz: str,
         description_ru: str,
         price: int,
-        photo: str,
+        photo: list,
         category: int,
         brand: int,
         subcategory: int
@@ -129,9 +123,3 @@ async def add_item(
         )
         session.add(item)
         await session.commit()
-
-
-async def add_item_image(item_id: int, image_url: str, session: AsyncSession):
-    item_image = ItemImages(item_id=item_id, image_url=image_url)
-    session.add(item_image)
-    await session.commit()
