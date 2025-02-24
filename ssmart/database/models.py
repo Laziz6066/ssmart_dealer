@@ -67,6 +67,21 @@ class Item(Base):
     subcategory: Mapped[int] = mapped_column(ForeignKey("subcategories.id"))
 
 
+class ItemImages(Base):
+    __tablename__ = 'item_images'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"))
+    image_url: Mapped[str] = mapped_column(String(255))
+
+
+class DollarExchangeRate(Base):
+    __tablename__ = 'dollar'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    course: Mapped[int] = mapped_column()
+
+
 async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

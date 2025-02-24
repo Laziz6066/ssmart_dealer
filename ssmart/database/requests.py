@@ -1,6 +1,6 @@
 from ssmart.database.models import async_session
-from ssmart.database.models import User, Category, Item, Brand, Subcategory
-from sqlalchemy import select
+from ssmart.database.models import User, Category, Item, Brand, Subcategory, DollarExchangeRate, ItemImages
+from sqlalchemy import select, update
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +14,12 @@ async def get_user(user_id: int):
     async with async_session() as session:
         result = await session.scalars(select(User.language).where(User.tg_id == user_id))
         return result.first()  # Get the first value
+
+
+async def get_course():
+    async with async_session() as session:
+        result = await session.execute(select(DollarExchangeRate.course))
+        return result.scalar()
 
 
 async def get_categories():
@@ -40,9 +46,32 @@ async def get_items(category_id, brand_id, subcategory_id):
         return await session.scalars(query)
 
 
+async def get_item_images(item_id: int):
+    async with async_session() as session:
+        result = await session.execute(select(ItemImages.image_url).where(ItemImages.item_id == item_id))
+        return result.scalars().all()
+
+
 async def add_user(user_id: int, user_name: str, language: str, session: AsyncSession):
     user = User(tg_id=user_id, user_name=user_name, language=language)
     session.add(user)
+    await session.commit()
+
+
+async def update_course(course: int, session: AsyncSession):
+    result = await session.execute(select(DollarExchangeRate).limit(1))
+    existing_course = result.scalars().first()
+
+    if existing_course:
+        await session.execute(
+            update(DollarExchangeRate)
+            .where(DollarExchangeRate.id == existing_course.id)
+            .values(course=course)
+        )
+    else:
+        new_course = DollarExchangeRate(course=course)
+        session.add(new_course)
+
     await session.commit()
 
 
@@ -100,3 +129,9 @@ async def add_item(
         )
         session.add(item)
         await session.commit()
+
+
+async def add_item_image(item_id: int, image_url: str, session: AsyncSession):
+    item_image = ItemImages(item_id=item_id, image_url=image_url)
+    session.add(item_image)
+    await session.commit()

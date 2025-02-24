@@ -56,3 +56,8 @@ choice_subcategory = {
     'ru': "Выберите подкатегорию:",
     'uz': "Pastki toifani tanlang:"
 }
+
+installment = {
+    'ru': "Выберите срок рассрочки:",
+    'uz': "To'lov muddatini tanlang:",
+}

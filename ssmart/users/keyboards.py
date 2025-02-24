@@ -4,7 +4,9 @@ from ssmart.database.requests import get_categories, get_brands, get_subcategori
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from ssmart.config import ADMINS
 import ssmart.database.requests as rq
+from ssmart.database.models import Item
 from ssmart.config import text_main_menu_key, text_get_contacts
+from ssmart.database.models import async_session
 
 load_dotenv()
 
@@ -108,7 +110,33 @@ async def item_keyboard(item_id, user_id):
     lang_choice = await rq.get_user(user_id)
     text_1 = "💳 Оплата картой" if lang_choice == 'ru' else "💳 Karta bilan to'lash"
     text_2 = "📆 Оформить в рассрочку" if lang_choice == 'ru' else "📆 Bo'lib to'lash"
+    text_3 = "🖼️ Еще картинки" if lang_choice == 'ru' else "🖼️ Boshqa rasmlar"
+
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=text_1, callback_data=f'pay_card_{item_id}')],
-        [InlineKeyboardButton(text=text_2, callback_data=f'installment_{item_id}')]
+        [InlineKeyboardButton(text=text_2, callback_data=f'installment_{item_id}')],
+        [InlineKeyboardButton(text=text_3, callback_data=f'more_images_{item_id}')]
+    ])
+
+
+async def installment(item_id, user_id):
+    lang_choice = await rq.get_user(user_id)
+
+    async with async_session() as session:
+        item = await session.get(Item, int(item_id))
+
+    course = await rq.get_course()
+
+    price_per_6 = item.price * course / 6
+    price_per_12 = item.price * course / 12
+    price_per_18 = item.price * course / 18
+
+    text_1 = f"6 месяцев по {price_per_6:,.0f} UZS" if lang_choice == 'ru' else f"6 oyga  {price_per_6:,.0f} UZS"
+    text_2 = f"12 месяцев по {price_per_12:,.0f} UZS" if lang_choice == 'ru' else f"12 oyga  {price_per_12:,.0f} UZS"
+    text_3 = f"18 месяцев по {price_per_18:,.0f} UZS" if lang_choice == 'ru' else f"18 oyga  {price_per_18:,.0f} UZS"
+
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=text_1, callback_data=f'month_6_{item_id}')],
+        [InlineKeyboardButton(text=text_2, callback_data=f'month_12_{item_id}')],
+        [InlineKeyboardButton(text=text_3, callback_data=f'month_18_{item_id}')]
     ])

@@ -114,10 +114,12 @@ async def show_items(callback: CallbackQuery):
         keyboard = await kb.item_keyboard(item.id, callback.from_user.id)
         item_name = item.name_ru if lang_choice == 'ru' else item.name_uz
         item_description = item.description_ru if lang_choice == 'ru' else item.description_uz
+        course = await rq.get_course()
         await callback.message.answer_photo(
             photo=item.photo,
-            caption=f"{item_name}\n{item_description}\n{price} {item.price:,.0f} UZS.".replace(",", " "),
-            reply_markup=keyboard
+            caption=f"{item_name}\n{item_description}\n{price} "
+                    f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
+            reply_markup=keyboard, parse_mode='html'
         )
 
     await callback.answer()
@@ -128,4 +130,33 @@ async def catalog_main(callback: CallbackQuery):
     lang_choice = await rq.get_user(callback.from_user.id)
     await callback.message.edit_text(config.choice_category[lang_choice],
                                      reply_markup=await kb.show_categories(callback.from_user.id))
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith('installment_'))
+async def show_installment(callback: CallbackQuery):
+    item_id = callback.data.split('_')[-1]
+    keyboard = await kb.installment(item_id, callback.from_user.id)
+    lang_choice = await rq.get_user(callback.from_user.id)
+
+    if callback.message.text or callback.message.caption:
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+    else:
+        await callback.message.answer(config.installment[lang_choice], reply_markup=keyboard)
+
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith('more_images_'))
+async def show_more_images(callback: CallbackQuery):
+    item_id = int(callback.data.split('_')[-1])
+    images = await rq.get_item_images(item_id)
+
+    if not images:
+        await callback.answer("Дополнительных изображений нет.")
+        return
+
+    for image in images:
+        await callback.message.answer_photo(photo=image)
+
     await callback.answer()

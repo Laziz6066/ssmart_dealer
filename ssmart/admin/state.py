@@ -31,6 +31,10 @@ class AddItem(StatesGroup):
     subcategory = State()
 
 
+class AddCourse(StatesGroup):
+    course = State()
+
+
 class DeleteCategory(StatesGroup):
     name_uz = State()
     name_ru = State()
