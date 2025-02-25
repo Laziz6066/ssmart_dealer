@@ -8,10 +8,10 @@ from ssmart.config import ADMINS
 import logging
 
 
-item_router = Router()
+add_item_router = Router()
 
 
-@item_router.message(F.text == 'Добавить товар')
+@add_item_router.message(F.text == 'Добавить товар')
 async def start_add_item(message: Message, state: FSMContext):
     if message.from_user.id in ADMINS:
         category_kb = await admin_kb.add_categories_item()
@@ -21,7 +21,7 @@ async def start_add_item(message: Message, state: FSMContext):
         await message.answer("У вас нет доступа !!!")
 
 
-@item_router.callback_query(F.data.startswith('add_item_category_'))
+@add_item_router.callback_query(F.data.startswith('add_item_category_'))
 async def process_category(callback: CallbackQuery, state: FSMContext):
     category_id = int(callback.data.split('_')[-1])
     await state.update_data(category=category_id)
@@ -38,7 +38,7 @@ async def process_category(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@item_router.callback_query(F.data.startswith('add_item_brands'))
+@add_item_router.callback_query(F.data.startswith('add_item_brands'))
 async def process_brand(callback: CallbackQuery, state: FSMContext):
     print(callback.data)
     data_parts = callback.data.split('_')
@@ -62,7 +62,7 @@ async def process_brand(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@item_router.callback_query(F.data.startswith('add_item_subcategory_'))
+@add_item_router.callback_query(F.data.startswith('add_item_subcategory_'))
 async def process_subcategory(callback: CallbackQuery, state: FSMContext):
     data_parts = callback.data.split('_')
     subcategory_id = int(data_parts[3])
@@ -78,35 +78,35 @@ async def process_subcategory(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@item_router.message(AddItem.name_ru)
+@add_item_router.message(AddItem.name_ru)
 async def process_item_name_ru(message: Message, state: FSMContext):
     await state.update_data(name_ru=message.text)
     await state.set_state(AddItem.name_uz)
     await message.answer("Введите название товара (на узбекском):")
 
 
-@item_router.message(AddItem.name_uz)
+@add_item_router.message(AddItem.name_uz)
 async def process_item_name_uz(message: Message, state: FSMContext):
     await state.update_data(name_uz=message.text)
     await state.set_state(AddItem.description_ru)
     await message.answer("Введите описание товара (на русском):")
 
 
-@item_router.message(AddItem.description_ru)
+@add_item_router.message(AddItem.description_ru)
 async def process_item_description_ru(message: Message, state: FSMContext):
     await state.update_data(description_ru=message.text)
     await state.set_state(AddItem.description_uz)
     await message.answer("Введите описание товара (на узбекском):")
 
 
-@item_router.message(AddItem.description_uz)
+@add_item_router.message(AddItem.description_uz)
 async def process_item_description_uz(message: Message, state: FSMContext):
     await state.update_data(description_uz=message.text)
     await state.set_state(AddItem.price)
     await message.answer("Введите цену товара (только число):")
 
 
-@item_router.message(AddItem.price)
+@add_item_router.message(AddItem.price)
 async def process_item_price(message: Message, state: FSMContext):
     if not message.text.isdigit():
         await message.answer("❌ Введите корректную цену (только число).")
@@ -117,7 +117,7 @@ async def process_item_price(message: Message, state: FSMContext):
     await message.answer("Отправьте до 3 фотографий товара. После отправки всех фотографий нажмите /done.")
 
 
-@item_router.message(AddItem.photo, F.photo)
+@add_item_router.message(AddItem.photo, F.photo)
 async def process_item_photo(message: Message, state: FSMContext):
     data = await state.get_data()
     photo = data.get('photo', [])  # Получаем текущий список фотографий
@@ -136,7 +136,7 @@ async def process_item_photo(message: Message, state: FSMContext):
         await message.answer("Вы отправили максимальное количество фотографий. Нажмите /done для завершения.")
 
 
-@item_router.message(AddItem.photo, F.text == '/done')
+@add_item_router.message(AddItem.photo, F.text == '/done')
 async def process_item_photo_done(message: Message, state: FSMContext):
     data = await state.get_data()
     photo = data.get('photo', [])
@@ -162,3 +162,4 @@ async def process_item_photo_done(message: Message, state: FSMContext):
     main_menu = await admin_kb.admin_keyboard(message.from_user.id)
     await state.clear()
     await message.answer("✅ Товар успешно добавлен!", reply_markup=main_menu)
+

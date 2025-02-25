@@ -108,12 +108,17 @@ async def show_items(category_id, brand_id, subcategory_id, user_id, for_admin=F
 
 async def item_keyboard(item_id, user_id):
     lang_choice = await rq.get_user(user_id)
+    keyboard = InlineKeyboardBuilder()
     text_1 = "💳 Оплата картой" if lang_choice == 'ru' else "💳 Karta bilan to'lash"
     text_2 = "📆 Оформить в рассрочку" if lang_choice == 'ru' else "📆 Bo'lib to'lash"
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=text_1, callback_data=f'pay_card_{item_id}')],
-        [InlineKeyboardButton(text=text_2, callback_data=f'installment_{item_id}')]
-    ])
+    keyboard.add(InlineKeyboardButton(text=text_1, callback_data=f'pay_card_{item_id}'))
+    keyboard.add(InlineKeyboardButton(text=text_2, callback_data=f'installment_{item_id}'))
+
+    if user_id in ADMINS:
+        keyboard.add(InlineKeyboardButton(text="Удалить товар", callback_data=f"delete_item_{item_id}"))
+        keyboard.add(InlineKeyboardButton(text="Изменить товар", callback_data=f"update_item_{item_id}"))
+
+    return keyboard.adjust(1).as_markup()
 
 
 async def installment(item_id, user_id):

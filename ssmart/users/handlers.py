@@ -100,14 +100,20 @@ async def show_subcategories(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('show_subcategory_'))
 async def show_items(callback: CallbackQuery):
-    brand_id = int(callback.data.split('_')[-2])
-    category_id = int(callback.data.split('_')[-1])
-    subcategory_id = int(callback.data.split('_')[-3])
+    # Предполагается, что callback.data имеет формат:
+    # 'show_subcategory_{subcategory_id}_{brand_id}_{category_id}'
+    data_parts = callback.data.split('_')
+    subcategory_id = int(data_parts[-3])
+    brand_id = int(data_parts[-2])
+    category_id = int(data_parts[-1])
+
     items = await rq.get_items(category_id, brand_id, subcategory_id)
     lang_choice = await rq.get_user(callback.from_user.id)
+
     if not items:
         text = "Товары не найдены." if lang_choice == 'ru' else "Maxsulotlar topilmadi."
         await callback.message.answer(text)
+        await callback.answer()
         return
 
     price_text = "Цена:" if lang_choice == 'ru' else "Narxi:"
@@ -118,10 +124,8 @@ async def show_items(callback: CallbackQuery):
         item_name = item.name_ru if lang_choice == 'ru' else item.name_uz
         item_description = item.description_ru if lang_choice == 'ru' else item.description_uz
 
-        # Если фото хранится в виде списка
         if isinstance(item.photo, list):
             if len(item.photo) > 1:
-                # Если несколько фотографий – формируем media group
                 media = []
                 for index, photo_url in enumerate(item.photo):
                     if index == 0:
@@ -129,14 +133,16 @@ async def show_items(callback: CallbackQuery):
                             InputMediaPhoto(
                                 media=photo_url,
                                 caption=f"{item_name}\n{item_description}\n{price_text} "
-                                        f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " ")
+                                        f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
+                                parse_mode='html'
                             )
                         )
                     else:
                         media.append(InputMediaPhoto(media=photo_url))
                 await callback.message.answer_media_group(media=media)
+                # Отправляем отдельное сообщение с клавиатурой под товаром
+                await callback.message.answer("Выберите действие:", reply_markup=keyboard)
             elif len(item.photo) == 1:
-                # Если одна фотография – отправляем как обычное фото
                 photo_url = item.photo[0]
                 await callback.message.answer_photo(
                     photo=photo_url,
@@ -146,7 +152,6 @@ async def show_items(callback: CallbackQuery):
                     parse_mode='html'
                 )
             else:
-                # Если список пустой, можно обработать этот случай (например, отправить сообщение без фото)
                 await callback.message.answer(
                     text=f"{item_name}\n{item_description}\n{price_text} "
                          f"<b>{item.price * course:,.0f} UZS.</b>".replace(",", " "),
@@ -154,7 +159,6 @@ async def show_items(callback: CallbackQuery):
                     parse_mode='html'
                 )
         else:
-            # Если по каким-то причинам photo не является списком
             await callback.message.answer_photo(
                 photo=item.photo,
                 caption=f"{item_name}\n{item_description}\n{price_text} "
@@ -162,7 +166,6 @@ async def show_items(callback: CallbackQuery):
                 reply_markup=keyboard,
                 parse_mode='html'
             )
-
     await callback.answer()
 
 
@@ -186,4 +189,3 @@ async def show_installment(callback: CallbackQuery):
         await callback.message.answer(config.installment[lang_choice], reply_markup=keyboard)
 
     await callback.answer()
-

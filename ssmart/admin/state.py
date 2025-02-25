@@ -51,5 +51,12 @@ class DeleteSubcategory(StatesGroup):
 
 
 class DeleteItem(StatesGroup):
-    name_uz = State()
+    confirm = State()
+
+
+class UpdateItem(StatesGroup):
     name_ru = State()
+    name_uz = State()
+    description_ru = State()
+    description_uz = State()
+    price = State()

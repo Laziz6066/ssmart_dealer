@@ -1,6 +1,6 @@
 from ssmart.database.models import async_session
 from ssmart.database.models import User, Category, Item, Brand, Subcategory, DollarExchangeRate
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -123,3 +123,31 @@ async def add_item(
         )
         session.add(item)
         await session.commit()
+
+
+async def delete_item(item_id: int):
+    async with async_session() as session:
+        await session.execute(delete(Item).where(Item.id == item_id))
+        await session.commit()
+
+
+async def update_item(item_id: int, name_ru: str, name_uz: str, description_ru: str, description_uz: str, price: int):
+    async with async_session() as session:
+        await session.execute(
+            update(Item)
+            .where(Item.id == item_id)
+            .values(
+                name_ru=name_ru,
+                name_uz=name_uz,
+                description_ru=description_ru,
+                description_uz=description_uz,
+                price=price
+            )
+        )
+        await session.commit()
+
+
+async def get_item_for_update(item_id: int):
+    async with async_session() as session:
+        result = await session.execute(select(Item).where(Item.id == item_id))
+        return result.scalars().first()
