@@ -9,10 +9,8 @@ from ssmart.database.requests import get_subcategories, get_brands, get_categori
 async def admin_keyboard(user_id: int) -> ReplyKeyboardMarkup:
     if user_id in ADMINS:
         buttons = [
-            [KeyboardButton(text='Добавить категорию'), KeyboardButton(text='Удалить категорию')],
-            [KeyboardButton(text='Добавить бренд'), KeyboardButton(text='Удалить бренд')],
-            [KeyboardButton(text='Добавить подкатегорию'), KeyboardButton(text='Удалить подкатегорию')],
-            [KeyboardButton(text='Добавить товар'), KeyboardButton(text='Удалить товар')],
+            [KeyboardButton(text='Добавить категорию'), KeyboardButton(text='Добавить бренд')],
+            [KeyboardButton(text='Добавить подкатегорию'), KeyboardButton(text='Добавить товар')],
             [KeyboardButton(text='Посмотреть курс'), KeyboardButton(text='Изменить курс')],
             [KeyboardButton(text='На главную')]
         ]
