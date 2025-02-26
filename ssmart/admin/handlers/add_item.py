@@ -115,7 +115,7 @@ async def process_item_price(message: Message, state: FSMContext):
 
     await state.update_data(price=int(message.text))
     await state.set_state(AddItem.photo)
-    await message.answer("Отправьте до 3 фотографий товара. После отправки всех фотографий нажмите /done.")
+    await message.answer("Отправьте до 6 фотографий товара. После отправки всех фотографий нажмите /done.")
 
 
 @add_item_router.message(AddItem.photo, F.photo)
@@ -123,16 +123,16 @@ async def process_item_photo(message: Message, state: FSMContext):
     data = await state.get_data()
     photo = data.get('photo', [])  # Получаем текущий список фотографий
 
-    if len(photo) >= 3:
-        await message.answer("❌ Вы уже отправили максимальное количество фотографий (3).")
+    if len(photo) >= 6:
+        await message.answer("❌ Вы уже отправили максимальное количество фотографий (6).")
         return
 
     photo_id = message.photo[-1].file_id
     photo.append(photo_id)  # Добавляем новую фотографию в список
     await state.update_data(photo=photo)
 
-    if len(photo) < 3:
-        await message.answer(f"Фотография добавлена. Отправьте еще {3 - len(photo)} фотографий или нажмите /done.")
+    if len(photo) < 6:
+        await message.answer(f"Фотография добавлена. Отправьте еще {6 - len(photo)} фотографий или нажмите /done.")
     else:
         await message.answer("Вы отправили максимальное количество фотографий. Нажмите /done для завершения.")
 
