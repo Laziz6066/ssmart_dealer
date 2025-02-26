@@ -10,12 +10,12 @@ import logging
 subcategory_router = Router()
 
 
-@subcategory_router.message(F.text == 'Добавить подкатегорию')
+@subcategory_router.message(F.text == 'Добавить бренд')
 async def start_add_subcategory(message: Message, state: FSMContext):
     if message.from_user.id in ADMINS:
         category_kb = await admin_kb.add_categories(for_admin=True)
         await state.set_state(AddSubcategory.category)
-        await message.answer("Выберите категорию для добавления подкатегории:", reply_markup=category_kb)
+        await message.answer("Выберите категорию для добавления бренда:", reply_markup=category_kb)
     else:
         await message.answer("У вас нет доступа !!!")
 
@@ -31,10 +31,10 @@ async def process_category(callback: CallbackQuery, state: FSMContext):
     main_menu = await admin_kb.admin_keyboard(callback.from_user.id)
     if brand_kb.inline_keyboard and len(brand_kb.inline_keyboard) > 0:
         await state.set_state(AddSubcategory.brand)
-        await callback.message.edit_text("Выберите бренд для добавления подкатегории:", reply_markup=brand_kb)
+        await callback.message.edit_text("Выберите подкатегорию для добавления бренда :", reply_markup=brand_kb)
     else:
-        await callback.message.answer("❌ В этой категории нет брендов. Добавьте бренд перед "
-                                         "созданием подкатегории.", reply_markup=main_menu)
+        await callback.message.answer("❌ В этой категории нет подкатегорий. Добавьте подкатегорию перед "
+                                         "созданием бренда.", reply_markup=main_menu)
 
     await callback.answer()
 
@@ -45,12 +45,12 @@ async def process_brand(callback: CallbackQuery, state: FSMContext):
     brand_id = int(data_parts[2])
     category_id = int(data_parts[3])
 
-    logging.info(f"Выбран бренд для добавления подкатегории: {brand_id}, категория: {category_id}")
+    logging.info(f"Выбрана подкатегория для добавления бренда: {brand_id}, категория: {category_id}")
 
     await state.update_data(brand=brand_id, category=category_id)
     await state.set_state(AddSubcategory.name_ru)
 
-    await callback.message.answer("Введите название подкатегории (на русском)", reply_markup=ReplyKeyboardRemove())
+    await callback.message.answer("Введите название бренда (на русском)", reply_markup=ReplyKeyboardRemove())
     await callback.answer()
 
 
@@ -58,7 +58,7 @@ async def process_brand(callback: CallbackQuery, state: FSMContext):
 async def process_brand(message: Message, state: FSMContext):
     await state.update_data(name_ru=message.text.strip())
     await state.set_state(AddSubcategory.name_uz)
-    await message.answer("Введите название подкатегории (на узбекском):")
+    await message.answer("Введите название бренда (на узбекском):")
 
 
 @subcategory_router.message(AddSubcategory.name_uz)
@@ -66,7 +66,7 @@ async def process_subcategory_name(message: Message, state: FSMContext):
     await state.update_data(name_uz=message.text)
     data = await state.get_data()
 
-    logging.info(f"Данные перед добавлением подкатегории: {data}")
+    logging.info(f"Данные перед добавлением бренда: {data}")
 
     await rq.add_subcategory(
         name_uz=data['name_uz'],
@@ -76,4 +76,4 @@ async def process_subcategory_name(message: Message, state: FSMContext):
     )
     main_menu = await admin_kb.admin_keyboard(message.from_user.id)
     await state.clear()
-    await message.answer("Подкатегория успешно добавлена!", reply_markup=main_menu)
+    await message.answer("Бренд успешно добавлен!", reply_markup=main_menu)

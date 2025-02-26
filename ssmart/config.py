@@ -48,13 +48,13 @@ choice_category = {
 }
 
 choice_brand = {
-    'ru': "Выберите бренд:",
-    'uz': "Brendni tanlang:"
+    'ru': "Выберите подкатегорию:",
+    'uz': "Pastki toifani tanlang:"
 }
 
 choice_subcategory = {
-    'ru': "Выберите подкатегорию:",
-    'uz': "Pastki toifani tanlang:"
+    'ru': "Выберите бренд:",
+    'uz': "Brendni tanlang:"
 }
 
 installment = {

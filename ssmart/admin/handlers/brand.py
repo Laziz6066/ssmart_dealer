@@ -12,7 +12,7 @@ import logging
 brand_router = Router()
 
 
-@brand_router.message(F.text == 'Добавить бренд')
+@brand_router.message(F.text == 'Добавить подкатегорию')
 async def start_add_brand(message: Message, state: FSMContext):
     if message.from_user.id in ADMINS:
         category_kb = await user_kb.show_categories(message.from_user.id, for_admin=True)
@@ -39,7 +39,7 @@ async def process_category(callback: CallbackQuery, state: FSMContext):
 
     await state.update_data(category=category_id)
     await state.set_state(AddBrand.name_ru)
-    await callback.message.answer("Введите название Бренда (на русском):", reply_markup=ReplyKeyboardRemove())
+    await callback.message.answer("Введите название подкатегории (на русском):", reply_markup=ReplyKeyboardRemove())
     await callback.answer()
 
 
@@ -47,7 +47,7 @@ async def process_category(callback: CallbackQuery, state: FSMContext):
 async def process_brand(message: Message, state: FSMContext):
     await state.update_data(name_ru=message.text.strip())
     await state.set_state(AddBrand.name_uz)
-    await message.answer("Введите название Бренда (на узбекском):")
+    await message.answer("Введите название подкатегории (на узбекском):")
 
 
 @brand_router.message(AddBrand.name_uz)
@@ -64,4 +64,4 @@ async def process_brand(message: Message, state: FSMContext):
     )
     keyboard = await admin_kb.admin_keyboard(message.from_user.id)
     await state.clear()
-    await message.answer("Бренд успешно добавлен!", reply_markup=keyboard)
+    await message.answer("Подкатегория успешно добавлена!", reply_markup=keyboard)

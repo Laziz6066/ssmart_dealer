@@ -31,9 +31,10 @@ async def process_category(callback: CallbackQuery, state: FSMContext):
     brand_kb = await admin_kb.add_brands_item(category_id)
     if brand_kb.inline_keyboard and len(brand_kb.inline_keyboard) > 0:
         await state.set_state(AddItem.brand)
-        await callback.message.edit_text("Выберите бренд для добавления товара:", reply_markup=brand_kb)
+        await callback.message.edit_text("Выберите подкатегорию для добавления товара:", reply_markup=brand_kb)
     else:
-        await callback.message.answer("❌ В этой категории нет брендов. Добавьте бренд перед созданием товара.")
+        await callback.message.answer("❌ В этой категории нет подкатегорий. "
+                                      "Добавьте подкатегорию перед созданием товара.")
 
     await callback.answer()
 
@@ -53,10 +54,10 @@ async def process_brand(callback: CallbackQuery, state: FSMContext):
     subcategory_kb = await admin_kb.add_subcategories_item(brand_id, category_id)
     if subcategory_kb.inline_keyboard and len(subcategory_kb.inline_keyboard) > 0:
         await state.set_state(AddItem.subcategory)
-        await callback.message.edit_text("Выберите подкатегорию для добавления товара:",
+        await callback.message.edit_text("Выберите бренд для добавления товара:",
                                          reply_markup=subcategory_kb)
     else:
-        await callback.message.answer("❌ В этом бренде нет подкатегорий. Добавьте подкатегорию "
+        await callback.message.answer("❌ В этой подкатегории нет брендов. Добавьте бренд "
                                       "перед созданием товара.")
 
     await callback.answer()
