@@ -151,3 +151,9 @@ async def get_item_for_update(item_id: int):
     async with async_session() as session:
         result = await session.execute(select(Item).where(Item.id == item_id))
         return result.scalars().first()
+
+
+async def delete_category_by_name(category_name: str):
+    async with async_session() as session:
+        await session.execute(delete(Category).where(Category.name_ru == category_name))
+        await session.commit()

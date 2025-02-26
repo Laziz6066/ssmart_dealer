@@ -36,8 +36,7 @@ class AddCourse(StatesGroup):
 
 
 class DeleteCategory(StatesGroup):
-    name_uz = State()
-    name_ru = State()
+    waiting_for_name = State()
 
 
 class DeleteBrand(StatesGroup):

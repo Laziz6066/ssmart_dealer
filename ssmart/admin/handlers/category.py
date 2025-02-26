@@ -1,8 +1,8 @@
 from aiogram import Router, F
-from ssmart.database.requests import add_category
+from ssmart.database.requests import add_category, delete_category_by_name
 from aiogram.types import Message
 import ssmart.users.keyboards as kb
-from ssmart.admin.state import AddCategory
+from ssmart.admin.state import AddCategory, DeleteCategory
 from aiogram.fsm.context import FSMContext
 from ssmart.config import ADMINS
 
@@ -45,3 +45,19 @@ async def save_category(message: Message, state: FSMContext):
     await state.clear()
     keyboard = await kb.get_main_keyboard(message.from_user.id)
     await message.answer(f"Категория '{category_name_ru[0:7]}...' успешно добавлена!", reply_markup=keyboard)
+
+
+@category_router.message(F.text == 'Удалить категорию')
+async def start_delete_category(message: Message, state: FSMContext):
+    if message.from_user.id in ADMINS:
+        await state.set_state(DeleteCategory.waiting_for_name)
+        await message.answer("Введите название категории для удаления:")
+    else:
+        await message.answer("У вас нет доступа.")
+
+@category_router.message(DeleteCategory.waiting_for_name)
+async def process_delete_category(message: Message, state: FSMContext):
+    category_name = message.text.strip()
+    await delete_category_by_name(category_name)
+    await message.answer(f"Категория '{category_name}' успешно удалена!")
+    await state.clear()
