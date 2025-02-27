@@ -7,19 +7,22 @@ load_dotenv()
 ADMINS = list(map(int, os.getenv('ADMINS', '').split(','))) if os.getenv('ADMINS') else []
 
 main_photo = "https://sun9-77.userapi.com/KWoCJ3Smj_J7QyoEci1kEAU2Lyp9YOHvmI6DnA/SXtJSQwIFKw.jpg"
+
 text_main_menu_key = {
     'ru': {
         'catalog': 'Каталог',
         'contacts': 'Контакты',
         'about': 'О нас',
-        'admin_panel': 'Админ панель',
+        'change_lang': 'Сменить язык'  # Новый текст
     },
     'uz': {
         'catalog': 'Katalog',
         'contacts': 'Kontaktlar',
         'about': 'Biz haqimizda',
+        'change_lang': "Tilni o'zgartirish"  # Новый текст
     }
 }
+
 text_get_contacts = {
     'ru': {
         'service': 'Сервисный центр',

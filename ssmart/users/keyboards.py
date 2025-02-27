@@ -23,9 +23,11 @@ async def get_main_keyboard(user_id: int) -> ReplyKeyboardMarkup:
     print('lang_choice key: ', lang_choice)
 
     buttons = [
-        [KeyboardButton(text=text_main_menu_key[lang_choice]['catalog'])],
+        [KeyboardButton(text=text_main_menu_key[lang_choice]['catalog']),
+         KeyboardButton(text=text_main_menu_key[lang_choice]['change_lang'])],
         [KeyboardButton(text=text_main_menu_key[lang_choice]['contacts']),
          KeyboardButton(text=text_main_menu_key[lang_choice]['about'])]]
+
 
     if user_id in ADMINS:
         buttons.insert(1, [KeyboardButton(text='Админ панель')])

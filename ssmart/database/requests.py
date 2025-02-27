@@ -157,3 +157,11 @@ async def delete_category_by_name(category_name: str):
     async with async_session() as session:
         await session.execute(delete(Category).where(Category.name_ru == category_name))
         await session.commit()
+
+
+# В requests.py добавьте:
+async def update_user_language(user_id: int, new_language: str, session: AsyncSession):
+    await session.execute(
+        update(User).where(User.tg_id == user_id).values(language=new_language)
+    )
+    await session.commit()

@@ -24,6 +24,14 @@ async def cmd_start(message: Message):
         )
 
 
+@router.message(F.text.in_({'Сменить язык', "Tilni o'zgartirish"}))
+async def change_language(message: Message):
+    keyboard = await kb.get_language()
+    lang_choice = await rq.get_user(message.from_user.id)
+    text = "Выберите язык:" if lang_choice == 'ru' else "Tilni tanlang:"
+    await message.answer(text, reply_markup=keyboard)
+
+
 @router.message(F.text.in_({'🇷🇺 Русский', "🇺🇿 O'zbekcha"}))
 async def language_selected(message: Message):
     lang_mapping = {'🇷🇺 Русский': 'ru', "🇺🇿 O'zbekcha": 'uz'}
@@ -31,7 +39,10 @@ async def language_selected(message: Message):
 
     async with rq.async_session() as session:
         user_exists = await rq.user_exists(message.from_user.id, session)
-
+        if await rq.user_exists(message.from_user.id, session):
+            await rq.update_user_language(message.from_user.id, selected_lang, session)
+        else:
+            await rq.add_user(message.from_user.id, message.from_user.first_name, selected_lang, session)
         if not user_exists:
             await rq.add_user(message.from_user.id, message.from_user.first_name, selected_lang, session)
     print("selected_lang: ", selected_lang)
