@@ -12,13 +12,16 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     keyboard = await kb.get_language()
-    photo = "https://sun9-77.userapi.com/KWoCJ3Smj_J7QyoEci1kEAU2Lyp9YOHvmI6DnA/SXtJSQwIFKw.jpg"
-
-    await message.answer_photo(
-        photo=photo,
-        caption="Добро пожаловать в дилерский центр Ssmart.\nВыберите язык:",
-        reply_markup=keyboard
-    )
+    lang_choice = await rq.get_user(message.from_user.id)
+    if lang_choice:
+        keyboard = await kb.get_main_keyboard(message.from_user.id)
+        await message.answer(text=config.text_main_menu[lang_choice], reply_markup=keyboard)
+    else:
+        await message.answer_photo(
+            photo=config.main_photo,
+            caption="Добро пожаловать в дилерский центр Ssmart.\nВыберите язык:",
+            reply_markup=keyboard
+        )
 
 
 @router.message(F.text.in_({'🇷🇺 Русский', "🇺🇿 O'zbekcha"}))
