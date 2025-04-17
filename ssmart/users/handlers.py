@@ -203,3 +203,20 @@ async def show_installment(callback: CallbackQuery):
         await callback.message.answer(config.installment[lang_choice], reply_markup=keyboard)
 
     await callback.answer()
+
+
+@router.callback_query(F.data.startswith(startswith="pay_card_"))
+async def process_pay_card(callback_query: CallbackQuery):
+    # Извлекаем идентификатор товара из данных колбэка (например, "pay_card_123" -> item_id = 123)
+    data = callback_query.data  # строка вида "pay_card_<item_id>"
+    try:
+        item_id = int(data.split("_")[2])
+    except (IndexError, ValueError):
+        await callback_query.answer("Некорректный формат данных!", show_alert=True)
+        return
+
+    user_id = callback_query.from_user.id
+    chat_id = callback_query.message.chat.id  # ID чата для отправки сообщений пользователю
+
+    # Получаем информацию о пользователе (например, язык интерфейса) из БД
+    user_lang = await rq.get_user(user_id)

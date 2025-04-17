@@ -1,5 +1,5 @@
-from sqlalchemy import BigInteger, String, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Column, Integer, BigInteger, ForeignKey, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from dotenv import load_dotenv
 import os
@@ -78,3 +78,17 @@ class DollarExchangeRate(Base):
 async def async_main():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, nullable=False)
+    item_id = Column(Integer, ForeignKey("items.id"), nullable=False)
+    payment_id = Column(Integer, nullable=False)  # ID транзакции от ATMOS
+    amount = Column(BigInteger, nullable=False)   # сумма в тийинах
+    status = Column(String(20), default="success")  # опционально, можно хранить "success", "pending", etc.
+
+    # Опционально, если хочешь связать товар
+    item = relationship("Item", back_populates="transactions")
