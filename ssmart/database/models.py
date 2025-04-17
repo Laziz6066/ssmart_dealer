@@ -66,6 +66,7 @@ class Item(Base):
     category: Mapped[int] = mapped_column(ForeignKey("categories.id"))
     brand: Mapped[int] = mapped_column(ForeignKey("brands.id"))
     subcategory: Mapped[int] = mapped_column(ForeignKey("subcategories.id"))
+    transactions = relationship("Transaction", back_populates="item")
 
 
 class DollarExchangeRate(Base):
