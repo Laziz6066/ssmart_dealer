@@ -1,6 +1,7 @@
 import os
 import asyncio
 import logging
+from pythonjsonlogger import jsonlogger
 from aiogram import Bot, Dispatcher
 from ssmart.users.handlers import router
 from ssmart.admin.handlers.admin_menu import admin_router
@@ -13,6 +14,14 @@ from ssmart.admin.handlers.subcategory import subcategory_router
 from ssmart.database.models import async_main
 from dotenv import load_dotenv
 
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
+#
+# logHandler = logging.FileHandler('bot_logs.json', encoding='utf-8')
+# formatter = jsonlogger.JsonFormatter('%(asctime)s %(name)s %(levelname)s %(message)s')
+#
+# logHandler.setFormatter(formatter)
+# logger.addHandler(logHandler)
 
 async def main():
     await async_main()

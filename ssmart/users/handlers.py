@@ -1,10 +1,17 @@
+import asyncio
+import logging
+from random import randint
+from uuid import uuid4
+import os
 from aiogram import F, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 import ssmart.users.keyboards as kb
 import ssmart.database.requests as rq
 from ssmart import config
 from aiogram.types import InputMediaPhoto
+from ssmart.utils.atmos_api import create_invoice
+from ssmart.utils.payments import monitor_payment
 
 router = Router()
 
@@ -114,8 +121,6 @@ async def show_subcategories(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('show_subcategory_'))
 async def show_items(callback: CallbackQuery):
-    # Предполагается, что callback.data имеет формат:
-    # 'show_subcategory_{subcategory_id}_{brand_id}_{category_id}'
     data_parts = callback.data.split('_')
     subcategory_id = int(data_parts[-3])
     brand_id = int(data_parts[-2])
@@ -205,18 +210,78 @@ async def show_installment(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith(startswith="pay_card_"))
-async def process_pay_card(callback_query: CallbackQuery):
-    # Извлекаем идентификатор товара из данных колбэка (например, "pay_card_123" -> item_id = 123)
-    data = callback_query.data  # строка вида "pay_card_<item_id>"
+@router.callback_query(F.data.startswith("pay_card_"))
+async def process_pay_card(callback: CallbackQuery):
+    """
+    Обработка кнопки \"Оплата картой\": создание инвойса, отправка ссылки пользователю.
+    Работает с endpoint checkout-ofd и ссылкой через checkout.pays.uz
+    """
+    await callback.answer()
+
     try:
-        item_id = int(data.split("_")[2])
+        item_id = int(callback.data.split("_")[2])
     except (IndexError, ValueError):
-        await callback_query.answer("Некорректный формат данных!", show_alert=True)
+        await callback.message.answer("❌ Некорректные данные для оплаты.")
         return
 
-    user_id = callback_query.from_user.id
-    chat_id = callback_query.message.chat.id  # ID чата для отправки сообщений пользователю
+    user_id = callback.from_user.id
+    chat_id = callback.message.chat.id
+    lang = await rq.get_user(user_id)
 
-    # Получаем информацию о пользователе (например, язык интерфейса) из БД
-    user_lang = await rq.get_user(user_id)
+    item = await rq.get_item(item_id)
+    course = await rq.get_course()
+    if not item:
+        await callback.message.answer("❌ Товар не найден.")
+        return
+
+    item_name = item.name_ru if lang == 'ru' else item.name_uz
+    amount = int(item.price * course) * 100
+    account = f"{user_id}{item_id}{uuid4().hex[:6]}"
+
+    invoice_data = await create_invoice(amount, item_name, item_id, account)
+    store_tx = invoice_data.get("store_transaction")
+    if store_tx:
+        import pprint
+        logging.info("📦 store_transaction:")
+        logging.info(pprint.pformat(store_tx))
+    else:
+        logging.warning("⚠️ store_transaction отсутствует в ответе ATMOS.")
+    if not isinstance(invoice_data, dict):
+        await callback.message.answer("⚠️ Не удалось создать счёт. Попробуйте позже.")
+        return
+
+    result = invoice_data.get("result")
+    if result and result.get("code") == "OK":
+        transaction_id = invoice_data.get("transaction_id")
+        if transaction_id:
+            store_id = int(os.getenv("ATMOS_STORE_ID"))
+            transaction_id = invoice_data.get("transaction_id")
+            redirect_url = "https://t.me/testing_expenses_bot"
+
+            pay_url = (
+                f"https://checkout.pays.uz/invoice/get?"
+                f"storeId={store_id}&transactionId={transaction_id}&redirectLink={redirect_url}"
+            )
+            text = (f"✅ Счёт на оплату <b>{item_name}</b> на сумму <b>{amount/100:.0f} UZS</b> сформирован.\n"
+                    f"Нажмите кнопку ниже для перехода к оплате:")
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text="💳 Оплатить сейчас", url=pay_url)]]
+            )
+            await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+
+            asyncio.create_task(
+                monitor_payment(
+                    payment_id=transaction_id,
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    item_id=item_id,
+                    amount=amount,
+                    account=account,
+                    bot=callback.bot
+                )
+            )
+        else:
+            await callback.message.answer("⚠️ Счёт создан, но идентификатор транзакции не получен.")
+    else:
+        desc = result.get("description") if result else "Неизвестная ошибка."
+        await callback.message.answer(f"⚠️ Не удалось создать счёт: {desc}")

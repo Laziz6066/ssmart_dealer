@@ -11,8 +11,10 @@ class AtmosTokenManager:
         self.consumer_key = os.getenv("ATMOS_CONSUMER_KEY")
         self.consumer_secret = os.getenv("ATMOS_CONSUMER_SECRET")
 
+
         if not self.consumer_key or not self.consumer_secret:
-            raise RuntimeError("❌ Не найдены ATMOS_CONSUMER_KEY и ATMOS_CONSUMER_SECRET в переменных окружения.")
+            raise RuntimeError("❌ Не найдены ATMOS_CONSUMER_KEY и "
+                               "ATMOS_CONSUMER_SECRET в переменных окружения.")
 
     async def get_token(self):
         """Запрос нового access_token от ATMOS"""

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from ssmart.database.models import async_session, Transaction
 from ssmart.database.models import User, Category, Item, Brand, Subcategory, DollarExchangeRate
 from sqlalchemy import select, update, delete
@@ -167,14 +169,22 @@ async def update_user_language(user_id: int, new_language: str, session: AsyncSe
     await session.commit()
 
 
-async def add_transaction(user_id: int, item_id: int, amount: int, payment_id: int):
+async def add_transaction(user_id, item_id, amount, payment_id, account):
     async with async_session() as session:
         transaction = Transaction(
             user_id=user_id,
             item_id=item_id,
             amount=amount,
             payment_id=payment_id,
-            status="success"
+            status="success",
+            created_at=datetime.utcnow()
         )
         session.add(transaction)
         await session.commit()
+
+
+
+async def get_item(item_id: int) -> Item | None:
+    async with async_session() as session:
+        result = await session.execute(select(Item).where(Item.id == item_id))
+        return result.scalar_one_or_none()

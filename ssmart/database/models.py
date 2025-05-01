@@ -1,10 +1,11 @@
+from datetime import datetime
+
 from sqlalchemy import Column, Integer, BigInteger, ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from dotenv import load_dotenv
 import os
-from sqlalchemy import Text
-from sqlalchemy import JSON
+from sqlalchemy import Text, JSON, DateTime
 
 
 load_dotenv()
@@ -87,9 +88,9 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(BigInteger, nullable=False)
     item_id = Column(Integer, ForeignKey("items.id"), nullable=False)
-    payment_id = Column(Integer, nullable=False)  # ID транзакции от ATMOS
-    amount = Column(BigInteger, nullable=False)   # сумма в тийинах
-    status = Column(String(20), default="success")  # опционально, можно хранить "success", "pending", etc.
+    payment_id = Column(Integer, nullable=False)
+    amount = Column(BigInteger, nullable=False)
+    status = Column(String(20), default="success")
+    created_at = Column(DateTime, default=datetime.utcnow)  # ✅ новое поле
 
-    # Опционально, если хочешь связать товар
     item = relationship("Item", back_populates="transactions")
