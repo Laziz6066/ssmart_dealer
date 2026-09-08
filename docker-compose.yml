@@ -16,7 +16,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=ssmart_dealer
       - DB_USER=postgres
-      - DB_PASS=52949235
+      - DB_PASS=${POSTGRES_PASSWORD}
     depends_on:
       - database
     env_file:
@@ -28,7 +28,7 @@ services:
     environment:
       - POSTGRES_DB=ssmart_dealer
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=52949235
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     env_file:
       - .env
     ports:
